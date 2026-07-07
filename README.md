@@ -1,4 +1,4 @@
-# shirabe (Python)
+# shirabe-sdk (Python)
 
 Official thin SDK for [Shirabe](https://shirabe.dev) — the Japan-specific, AI-native API platform.
 **Zero dependencies** (standard library only). Python 3.8+.
@@ -7,8 +7,10 @@ The headline is **composite enrich**: normalize a messy customer record across f
 identifiers — **address, personal name, corporate number, calendar date** — in a single call.
 
 ```bash
-pip install shirabe
+pip install shirabe-sdk
 ```
+
+The import name stays `shirabe`:
 
 ## Quick start
 
