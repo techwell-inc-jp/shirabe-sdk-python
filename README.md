@@ -1,10 +1,12 @@
 # shirabe-sdk (Python)
 
 Official thin SDK for [Shirabe](https://shirabe.dev) — the Japan-specific, AI-native API platform.
-**Zero dependencies** (standard library only). Python 3.8+.
+**Zero dependencies in the core** (standard library only). Python 3.8+.
 
 The headline is **composite enrich**: normalize a messy customer record across four Japanese
 identifiers — **address, personal name, corporate number, calendar date** — in a single call.
+Ready-made **LangChain / OpenAI Agents SDK tools** are available as optional extras
+(see [Agent tools](#agent-tools-langchain--openai-agents-sdk)).
 
 ```bash
 pip install shirabe-sdk
@@ -67,8 +69,53 @@ except ShirabeError as err:
 ```python
 shirabe.calendar("2026-07-01", categories=["wedding"])  # 六曜・暦注・用途別スコア
 shirabe.normalize_address("東京都港区六本木6-10-1")        # ABR 準拠の住所正規化
+shirabe.split_name("山田太郎")                            # 姓名分割(IPAdic、confidence 付き)
+shirabe.name_reading("東海林裕子")                        # 読み推定(最頻 + 収載候補の全網羅)
+shirabe.validate_corporation("1234567890123")            # 法人番号 検証(checksum + レジストリ実在)
+shirabe.lookup_corporation("1234567890123")              # 法人番号 → 商号・所在地・法人種別
 shirabe.request("GET", "/api/v1/...")                    # low-level escape hatch
 ```
+
+## Agent tools (LangChain / OpenAI Agents SDK)
+
+Seven ready-made tools — address normalization, name split/reading, corporate number
+validate/lookup, calendar, and composite enrich — generated from a single framework-agnostic
+spec (`shirabe.tools`). Most endpoints need **no API key**.
+
+**LangChain** (`pip install "shirabe-sdk[langchain]"`, langchain-core >= 0.3.40):
+
+```python
+from shirabe.langchain import shirabe_langchain_tools
+from langchain_openai import ChatOpenAI
+
+tools = shirabe_langchain_tools()
+model = ChatOpenAI(model="gpt-4o").bind_tools(tools)
+```
+
+Works as-is with LangGraph prebuilt agents:
+
+```python
+from langgraph.prebuilt import create_react_agent
+
+agent = create_react_agent(ChatOpenAI(model="gpt-4o"), shirabe_langchain_tools())
+```
+
+**OpenAI Agents SDK** (`pip install "shirabe-sdk[openai-agents]"`, Python 3.9+):
+
+```python
+from agents import Agent, Runner
+from shirabe.openai_agents import shirabe_openai_agents_tools
+
+agent = Agent(
+    name="assistant",
+    instructions="日本のデータは Shirabe tool で裏取りして答える。",
+    tools=shirabe_openai_agents_tools(),
+)
+result = Runner.run_sync(agent, "「東海林裕子」さんの氏名の読みを調べて。")
+```
+
+Both factories accept the same options as `ShirabeClient`
+(`api_key`, `base_url`, `timeout`, `transport`, `default_headers`).
 
 ## Custom transport
 

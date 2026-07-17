@@ -23,7 +23,7 @@ __all__ = [
 
 DEFAULT_BASE_URL = "https://shirabe.dev"
 _DEFAULT_TIMEOUT = 8.0
-_USER_AGENT = "shirabe-python/0.1.0"
+_USER_AGENT = "shirabe-python/0.2.0"
 
 
 class EnrichRecord(TypedDict, total=False):
@@ -99,10 +99,12 @@ class ShirabeClient:
         base_url: str = DEFAULT_BASE_URL,
         timeout: float = _DEFAULT_TIMEOUT,
         transport: Optional[Transport] = None,
+        default_headers: Optional[Dict[str, str]] = None,
     ) -> None:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.default_headers: Dict[str, str] = dict(default_headers or {})
         self._transport: Transport = transport or _urllib_transport
 
     def enrich(
@@ -147,6 +149,26 @@ class ShirabeClient:
         """単一住所を正規化する(ABR 準拠、CC BY 4.0 attribution 同梱)。"""
         return self.request("POST", "/api/v1/address/normalize", body={"address": address})
 
+    def split_name(self, name: str) -> Dict[str, Any]:
+        """日本人の氏名を姓・名に分割する(IPAdic ベース、confidence 同梱)。"""
+        return self.request("POST", "/api/v1/text/name-split", body={"name": name})
+
+    def name_reading(self, name: str) -> Dict[str, Any]:
+        """氏名の読み(ふりがな)を推定する。
+
+        読みは非一意のため、最頻の ``reading`` に加え収載読みの全候補 ``candidates`` と
+        出典(``attribution``)を返す。
+        """
+        return self.request("POST", "/api/v1/text/name-reading", body={"name": name})
+
+    def validate_corporation(self, law_id: str) -> Dict[str, Any]:
+        """法人番号(13 桁)を検証する(形式 + チェックディジット + レジストリ実在)。"""
+        return self.request("POST", "/api/v1/corporation/validate", body={"law_id": law_id})
+
+    def lookup_corporation(self, law_id: str) -> Dict[str, Any]:
+        """法人番号から登記上の商号・所在地・法人種別を照会する(attribution 同梱)。"""
+        return self.request("POST", "/api/v1/corporation/lookup", body={"law_id": law_id})
+
     def request(
         self,
         method: str,
@@ -159,6 +181,7 @@ class ShirabeClient:
             ShirabeError: 非 2xx 時(``body`` を保持)。
         """
         headers: Dict[str, str] = {"Accept": "application/json", "User-Agent": _USER_AGENT}
+        headers.update(self.default_headers)
         if self.api_key:
             headers["X-API-Key"] = self.api_key
 

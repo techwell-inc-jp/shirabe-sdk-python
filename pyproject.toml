@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "shirabe-sdk"
-version = "0.1.0"
-description = "Official thin SDK for the Shirabe Japan-specific AI-native API platform — composite enrich (address, name, corporate number, calendar) in one call. Zero dependencies."
+version = "0.2.0"
+description = "Official thin SDK for the Shirabe Japan-specific AI-native API platform — composite enrich (address, name, corporate number, calendar) in one call, plus ready-made LangChain and OpenAI Agents SDK tools. Zero dependencies in the core."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
@@ -21,6 +21,10 @@ keywords = [
     "ai",
     "llm",
     "agent",
+    "langchain",
+    "openai-agents",
+    "tools",
+    "function-calling",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -31,6 +35,12 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+# dict の args_schema 対応は langchain-core 0.3.40 で verify 済み(0.3.14 は不可)
+langchain = ["langchain-core>=0.3.40"]
+# FunctionTool の同一 API は 0.1.0 で verify 済み(Python 3.9+)
+openai-agents = ["openai-agents>=0.1.0"]
 
 [project.urls]
 Homepage = "https://shirabe.dev"
